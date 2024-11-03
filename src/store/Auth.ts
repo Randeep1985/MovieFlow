@@ -5,7 +5,6 @@ import { persist } from "zustand/middleware";
 import { AppwriteException, ID, Models } from "appwrite";
 import { account } from "@/models/client/config";
 
-
 interface UserPrefs {
   reputation: number;
 }
@@ -35,72 +34,81 @@ interface IAuthStore {
     error?: AppwriteException | null;
   }>;
   logOut(): void;
-
 }
-
 
 export const useAuthStore = create<IAuthStore>()(
   persist(
     immer((set) => ({
-        session: null,
-        jwt: null,
-        user: null,
-        hydrated: false,
+      session: null,
+      jwt: null,
+      user: null,
+      hydrated: false,
 
-        setHydrated() {
-            set({hydrated: true})
-        },
+      setHydrated() {
+        set({ hydrated: true });
+      },
 
-        async veryfiySession() {
-            try {
-                const session = await account.getSession("current")
-                set({session})
-                
-            } catch (error) {
-                console.log(error)
-            }
-
-        },
-
-        async login(email, password) {
-            try {
-                const session = await account.createEmailPasswordSession(email, password)
-                set({session})
-                const [user, {jwt}] = await Promise.all([
-                    account.get<UserPrefs>(),
-                    account.createJWT()
-                ])
-                if(!user.prefs?.reputation) await account.updatePrefs<UserPrefs>({reputation: 0})
-                return {success: true}
-            } catch (error) {
-                console.log(error)
-                return {success: false, error: error instanceof AppwriteException ? error : null}
-            }
-        },
-
-        async createAccount(name, email, password) {
-            try {
-                await account.create(ID.unique(), name, email, password)
-                return {success: true}
-            } catch (error) {
-                console.log(error)
-                return {success: false, error: error instanceof AppwriteException ? error : null}
-            }
-        },
-
-        async logOut() {
-
+      async veryfiySession() {
+        try {
+          const session = await account.getSession("current");
+          set({ session });
+        } catch (error) {
+          console.log(error);
         }
+      },
 
+      async login(email, password) {
+        try {
+          const session = await account.createEmailPasswordSession(
+            email,
+            password
+          );
+          set({ session });
+          const [user, { jwt }] = await Promise.all([
+            account.get<UserPrefs>(),
+            account.createJWT(),
+          ]);
+          if (!user.prefs?.reputation)
+            await account.updatePrefs<UserPrefs>({ reputation: 0 });
+          return { success: true };
+        } catch (error) {
+          console.log(error);
+          return {
+            success: false,
+            error: error instanceof AppwriteException ? error : null,
+          };
+        }
+      },
+
+      async createAccount(name, email, password) {
+        try {
+          await account.create(ID.unique(), name, email, password);
+          return { success: true };
+        } catch (error) {
+          console.log(error);
+          return {
+            success: false,
+            error: error instanceof AppwriteException ? error : null,
+          };
+        }
+      },
+
+      async logOut() {
+        try {
+          await account.deleteSessions();
+          set({ session: null, jwt: null, user: null });
+        } catch (error) {
+          console.log(error);
+        }
+      },
     })),
     {
-        name: "auth",
-        onRehydrateStorage() {
-            return (state, error) => {
-                if(!error) state?.setHydrated()
-            }
-        },
+      name: "auth",
+      onRehydrateStorage() {
+        return (state, error) => {
+          if (!error) state?.setHydrated();
+        };
+      },
     }
-
-  
-)
+  )
+);
