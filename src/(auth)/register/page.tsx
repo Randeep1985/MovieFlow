@@ -1,7 +1,8 @@
+"use client";
 import { useAuthStore } from "@/store/Auth";
 import React, { useState } from "react";
 
-export const page = () => {
+export const RegisterPage = () => {
   const { createAccount, login } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -31,5 +32,13 @@ export const page = () => {
     }
     setIsLoading(false);
   };
-  return <div>page</div>;
+  return (
+    <div>
+      {error && <p>{error}</p>}
+
+      <form onSubmit={handleSubmit}>Submit</form>
+    </div>
+  );
 };
+
+export default RegisterPage
